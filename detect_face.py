@@ -29,10 +29,20 @@ from __future__ import print_function
 from six import string_types, iteritems
 
 import numpy as np
-import tensorflow as tf
+import tensorflow
 #from math import floor
 import cv2
 import os
+
+#----tensorflow version check
+if tensorflow.__version__.startswith('1.'):
+    import tensorflow as tf
+    #from tensorflow.python.platform import gfile
+else:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+    #import tensorflow.compat.v1.gfile as gfile
+print("Tensorflow version: ",tf.__version__)
 
 def layer(op):
     """Decorator for composable network layers."""

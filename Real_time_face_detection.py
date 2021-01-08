@@ -1,8 +1,16 @@
 import cv2
 import time
-import tensorflow as tf
+import tensorflow
 import detect_face
 import numpy as np
+
+#----tensorflow version check
+if tensorflow.__version__.startswith('1.'):
+    import tensorflow as tf
+else:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+print("Tensorflow version: ",tf.__version__)
 
 
 def video_init(is_2_write=False,save_path=None):
@@ -55,8 +63,8 @@ def face_detection_MTCNN(detect_multiple_faces=False):
         config = tf.ConfigProto(log_device_placement=True,
                                 allow_soft_placement=True,  # 允許當找不到設備時自動轉換成有支援的設備
                                 )
-        config.gpu_options.allow_growth = True
-        # config.gpu_options.per_process_gpu_memory_fraction = 0.7
+        # config.gpu_options.allow_growth = True
+        config.gpu_options.per_process_gpu_memory_fraction = 0.1
         sess = tf.Session(config=config)
         with sess.as_default():
             pnet, rnet, onet = detect_face.create_mtcnn(sess, None)
@@ -70,9 +78,13 @@ def face_detection_MTCNN(detect_multiple_faces=False):
         if ret is True:
             #----image processing
             img_rgb = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+            print("image shape:",img_rgb.shape)
 
             #----face detection
+            t_1 = time.time()
             bounding_boxes, points = detect_face.detect_face(img_rgb, minsize, pnet, rnet, onet, threshold, factor)
+            d_t = time.time() - t_1
+            print("Time of face detection: ",d_t)
 
             #----bounding boxes processing
             nrof_faces = bounding_boxes.shape[0]
@@ -122,8 +134,8 @@ def face_detection_MTCNN(detect_multiple_faces=False):
             if frame_count == 0:
                 t_start = time.time()
             frame_count += 1
-            if frame_count >= 10:
-                FPS = "FPS=%1f" % (10 / (time.time() - t_start))
+            if frame_count >= 20:
+                FPS = "FPS=%1f" % (frame_count / (time.time() - t_start))
                 frame_count = 0
 
             # cv2.putText(影像, 文字, 座標, 字型, 大小, 顏色, 線條寬度, 線條種類)
@@ -151,4 +163,4 @@ def face_detection_MTCNN(detect_multiple_faces=False):
 
 
 if __name__ == "__main__":
-    face_detection_MTCNN(detect_multiple_faces=False)
+    face_detection_MTCNN(detect_multiple_faces=True)
